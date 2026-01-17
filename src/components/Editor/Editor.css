@@ -80,10 +80,36 @@
   height: 28px;
 }
 
-/* Editor Content */
-.editor-content {
+/* Editor Scroll Wrapper */
+.editor-scroll-wrapper {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.editor-scroll-wrapper::-webkit-scrollbar {
+  width: 4px;
+}
+
+.editor-scroll-wrapper::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.editor-scroll-wrapper::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 2px;
+}
+
+.editor-scroll-wrapper:hover::-webkit-scrollbar-thumb {
+  background: var(--text-tertiary);
+}
+
+.editor-scroll-wrapper::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+/* Editor Content */
+.editor-content {
   padding: 0 20px 20px;
 }
 
@@ -105,6 +131,57 @@
   height: auto;
   border-radius: 6px;
   margin: 6px 0;
+}
+
+/* Resizable Image */
+.resizable-image-wrapper {
+  display: inline-block;
+  max-width: 100%;
+}
+
+.resizable-image-container {
+  position: relative;
+  display: inline-block;
+  line-height: 0;
+}
+
+.resizable-image-container img {
+  display: block;
+  border-radius: 6px;
+}
+
+.resizable-image-container.selected {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+}
+
+.resizable-image-container.resizing {
+  outline: 2px solid var(--accent-color);
+}
+
+.resize-handle {
+  position: absolute;
+  top: 0;
+  width: 10px;
+  height: 100%;
+  cursor: ew-resize;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.resizable-image-container:hover .resize-handle,
+.resizable-image-container.selected .resize-handle {
+  opacity: 1;
+}
+
+.resize-handle-right {
+  right: -5px;
+  background: linear-gradient(to right, transparent, var(--accent-color));
+}
+
+.resize-handle-left {
+  left: -5px;
+  background: linear-gradient(to left, transparent, var(--accent-color));
 }
 
 .editor-content .tiptap p.is-editor-empty:first-child::before {
@@ -135,6 +212,26 @@
   margin: 0 0 4px 0;
 }
 
+.editor-content .tiptap ul:not([data-type="taskList"]) {
+  list-style: none;
+  padding-left: 24px;
+}
+
+.editor-content .tiptap ul:not([data-type="taskList"]) > li {
+  position: relative;
+}
+
+.editor-content .tiptap ul:not([data-type="taskList"]) > li::before {
+  content: '';
+  position: absolute;
+  left: -14px;
+  top: 8px;
+  width: 5px;
+  height: 5px;
+  background: var(--text-secondary);
+  border-radius: 50%;
+}
+
 .editor-content .tiptap li {
   margin: 2px 0;
 }
@@ -160,9 +257,10 @@
   margin: 8px 0 4px;
 }
 
-/* Code */
+/* Code - Slack style with orange theme */
 .editor-content .tiptap code {
   background: var(--bg-tertiary);
+  color: var(--accent-check);
   padding: 2px 5px;
   border-radius: 4px;
   font-family: 'SF Mono', 'Monaco', 'Menlo', monospace;
@@ -188,6 +286,19 @@
   padding-left: 14px;
   margin: 6px 0;
   color: var(--text-secondary);
+}
+
+/* Links */
+.editor-content .tiptap a,
+.editor-content .tiptap .editor-link {
+  color: var(--accent-color);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.editor-content .tiptap a:hover,
+.editor-content .tiptap .editor-link:hover {
+  color: var(--accent-check);
 }
 
 /* Task List / Todo - Apple Notes Style with Round Checkboxes */

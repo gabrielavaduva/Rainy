@@ -1,10 +1,12 @@
 "use strict";
-const { app, BrowserWindow, ipcMain } = require("electron");
+const { app, BrowserWindow, ipcMain, shell } = require("electron");
 const path = require("path");
 const fs = require("fs");
+const mongodb = require("./mongodb");
 const DATA_DIR = path.join(app.getPath("userData"), "rainy-data");
 const NOTES_DIR = path.join(DATA_DIR, "notes");
 const FOLDERS_FILE = path.join(DATA_DIR, "folders.json");
+const SETTINGS_FILE = path.join(DATA_DIR, "settings.json");
 function ensureDataDirs() {
   if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -16,6 +18,25 @@ function ensureDataDirs() {
     fs.writeFileSync(FOLDERS_FILE, JSON.stringify([
       { id: "root", name: "Notes", parentId: null }
     ], null, 2));
+  }
+  if (!fs.existsSync(SETTINGS_FILE)) {
+    fs.writeFileSync(SETTINGS_FILE, JSON.stringify({}, null, 2));
+  }
+}
+function getSettings() {
+  try {
+    return JSON.parse(fs.readFileSync(SETTINGS_FILE, "utf-8"));
+  } catch {
+    return {};
+  }
+}
+function saveSettings(settings) {
+  fs.writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2));
+}
+async function initMongoDB() {
+  const settings = getSettings();
+  if (settings.mongoDbUri) {
+    await mongodb.connect(settings.mongoDbUri);
   }
 }
 function createWindow() {
@@ -35,7 +56,8 @@ function createWindow() {
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
-      nodeIntegration: false
+      nodeIntegration: false,
+      webviewTag: true
     }
   });
   if (process.env.VITE_DEV_SERVER_URL) {
@@ -44,8 +66,9 @@ function createWindow() {
     win.loadFile(path.join(__dirname, "../dist/index.html"));
   }
 }
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   ensureDataDirs();
+  await initMongoDB();
   createWindow();
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -59,6 +82,10 @@ app.on("window-all-closed", () => {
   }
 });
 ipcMain.handle("get-folders", async () => {
+  const mongoFolders = await mongodb.getFolders();
+  if (mongoFolders !== null) {
+    return mongoFolders;
+  }
   try {
     const data = fs.readFileSync(FOLDERS_FILE, "utf-8");
     return JSON.parse(data);
@@ -67,14 +94,19 @@ ipcMain.handle("get-folders", async () => {
   }
 });
 ipcMain.handle("save-folders", async (event, folders) => {
+  const mongoSuccess = await mongodb.saveFolders(folders);
   try {
     fs.writeFileSync(FOLDERS_FILE, JSON.stringify(folders, null, 2));
-    return { success: true };
+    return { success: true, synced: mongoSuccess };
   } catch (error) {
-    return { success: false, error: error.message };
+    return { success: false, error: error.message, synced: mongoSuccess };
   }
 });
 ipcMain.handle("get-notes", async () => {
+  const mongoNotes = await mongodb.getNotes();
+  if (mongoNotes !== null) {
+    return mongoNotes;
+  }
   try {
     const files = fs.readdirSync(NOTES_DIR);
     const notes = files.filter((f) => f.endsWith(".json")).map((f) => {
@@ -87,20 +119,56 @@ ipcMain.handle("get-notes", async () => {
   }
 });
 ipcMain.handle("save-note", async (event, note) => {
+  const mongoSuccess = await mongodb.saveNote(note);
   try {
     const filePath = path.join(NOTES_DIR, `${note.id}.json`);
     fs.writeFileSync(filePath, JSON.stringify(note, null, 2));
-    return { success: true };
+    return { success: true, synced: mongoSuccess };
   } catch (error) {
-    return { success: false, error: error.message };
+    return { success: false, error: error.message, synced: mongoSuccess };
   }
 });
 ipcMain.handle("delete-note", async (event, noteId) => {
+  const mongoSuccess = await mongodb.deleteNote(noteId);
   try {
     const filePath = path.join(NOTES_DIR, `${noteId}.json`);
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
     }
+    return { success: true, synced: mongoSuccess };
+  } catch (error) {
+    return { success: false, error: error.message, synced: mongoSuccess };
+  }
+});
+ipcMain.handle("get-settings", async () => {
+  const settings = getSettings();
+  return {
+    mongoDbUri: settings.mongoDbUri || "",
+    isConnected: mongodb.getConnectionStatus()
+  };
+});
+ipcMain.handle("save-mongodb-uri", async (event, uri) => {
+  try {
+    const settings = getSettings();
+    settings.mongoDbUri = uri;
+    saveSettings(settings);
+    if (uri) {
+      const connected = await mongodb.connect(uri);
+      return { success: true, connected };
+    } else {
+      await mongodb.disconnect();
+      return { success: true, connected: false };
+    }
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+ipcMain.handle("get-connection-status", async () => {
+  return mongodb.getConnectionStatus();
+});
+ipcMain.handle("open-external", async (event, url) => {
+  try {
+    await shell.openExternal(url);
     return { success: true };
   } catch (error) {
     return { success: false, error: error.message };

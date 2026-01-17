@@ -2,11 +2,12 @@ import { useEffect, useRef, useCallback } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
-import Image from '@tiptap/extension-image'
+import Link from '@tiptap/extension-link'
 import TextStyle from '@tiptap/extension-text-style'
 import TaskList from '@tiptap/extension-task-list'
 import TaskItem from '@tiptap/extension-task-item'
 import { Extension } from '@tiptap/core'
+import ResizableImage from './ResizableImage'
 import Toolbar from './Toolbar'
 import './Editor.css'
 
@@ -45,9 +46,17 @@ function Editor({ note, onUpdate }) {
     extensions: [
       StarterKit,
       Underline,
-      Image.configure({
+      ResizableImage.configure({
         inline: true,
         allowBase64: true,
+      }),
+      Link.configure({
+        openOnClick: false,
+        autolink: true,
+        linkOnPaste: true,
+        HTMLAttributes: {
+          class: 'editor-link',
+        },
       }),
       TextStyle,
       FontSize,
@@ -105,6 +114,14 @@ function Editor({ note, onUpdate }) {
     }
   }
 
+  const handleEditorClick = (e) => {
+    const link = e.target.closest('a')
+    if (link && link.href) {
+      e.preventDefault()
+      window.electronAPI.openExternal(link.href)
+    }
+  }
+
   if (!note) {
     return (
       <div className="editor-empty">
@@ -125,7 +142,9 @@ function Editor({ note, onUpdate }) {
         placeholder="Note title..."
       />
       <Toolbar editor={editor} />
-      <EditorContent editor={editor} className="editor-content" />
+      <div className="editor-scroll-wrapper" onClick={handleEditorClick}>
+        <EditorContent editor={editor} className="editor-content" />
+      </div>
     </div>
   )
 }

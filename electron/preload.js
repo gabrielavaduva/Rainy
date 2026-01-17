@@ -9,4 +9,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getNotes: () => ipcRenderer.invoke('get-notes'),
   saveNote: (note) => ipcRenderer.invoke('save-note', note),
   deleteNote: (noteId) => ipcRenderer.invoke('delete-note', noteId),
+
+  // Settings & MongoDB
+  getSettings: () => ipcRenderer.invoke('get-settings'),
+  saveMongoDbUri: (uri) => ipcRenderer.invoke('save-mongodb-uri', uri),
+  getConnectionStatus: () => ipcRenderer.invoke('get-connection-status'),
+
+  // External links
+  openExternal: (url) => ipcRenderer.invoke('open-external', url),
 })

@@ -38,10 +38,15 @@
   gap: 2px;
   border-radius: 6px;
   margin: 1px 0;
+  transition: background 0.15s ease, transform 0.15s ease;
 }
 
 .folder-row:hover {
   background: var(--bg-tertiary);
+}
+
+.folder-row:active {
+  transform: scale(0.98);
 }
 
 .folder-row.selected {

@@ -1,4 +1,5 @@
 import { FileText, Plus, Trash2 } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import './NoteList.css'
 
 function NoteList({ notes, selectedNoteId, onSelectNote, onCreateNote, onDeleteNote }) {
@@ -48,29 +49,36 @@ function NoteList({ notes, selectedNoteId, onSelectNote, onCreateNote, onDeleteN
             </button>
           </div>
         ) : (
-          sortedNotes.map(note => (
-            <div
-              key={note.id}
-              className={`note-item ${note.id === selectedNoteId ? 'selected' : ''}`}
-              onClick={() => onSelectNote(note.id)}
-            >
-              <div className="note-item-content">
-                <div className="note-title">{note.title || 'Untitled Note'}</div>
-                <div className="note-preview">{getPreview(note.content)}</div>
-                <div className="note-date">{formatDate(note.updatedAt)}</div>
-              </div>
-              <button
-                className="btn-icon btn-danger note-delete"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onDeleteNote(note.id)
-                }}
-                title="Delete note"
+          <AnimatePresence mode="popLayout">
+            {sortedNotes.map(note => (
+              <motion.div
+                key={note.id}
+                layout
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.2, ease: 'easeOut' }}
+                className={`note-item ${note.id === selectedNoteId ? 'selected' : ''}`}
+                onClick={() => onSelectNote(note.id)}
               >
-                <Trash2 size={14} />
-              </button>
-            </div>
-          ))
+                <div className="note-item-content">
+                  <div className="note-title">{note.title || 'Untitled Note'}</div>
+                  <div className="note-preview">{getPreview(note.content)}</div>
+                  <div className="note-date">{formatDate(note.updatedAt)}</div>
+                </div>
+                <button
+                  className="btn-icon btn-danger note-delete"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onDeleteNote(note.id)
+                  }}
+                  title="Delete note"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </motion.div>
+            ))}
+          </AnimatePresence>
         )}
       </div>
     </div>

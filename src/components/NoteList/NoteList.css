@@ -49,10 +49,15 @@
   cursor: pointer;
   gap: 8px;
   margin: 2px 0;
+  transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .note-item:hover {
   background: var(--bg-tertiary);
+}
+
+.note-item:active {
+  transform: scale(0.98);
 }
 
 .note-item.selected {
