@@ -1,6 +1,7 @@
 # Rainy
 
 A lightweight desktop notes app inspired by Apple Notes. Cross-platform alternative with cloud sync support.
+<img width="1480" height="986" alt="image" src="https://github.com/user-attachments/assets/578f1a3b-d5e6-404c-8712-dfb4772ee807" />
 
 ## Features
 
